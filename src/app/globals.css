@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy: #002B5B;
+    --navy-royal: #003F88;
+    --gold: #F4C300;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-grey-dark antialiased;
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-grey-light;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-navy-royal rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-navy;
+  }
+}
+
+@layer components {
+  .section-heading {
+    @apply text-2xl font-bold text-navy border-l-4 border-gold pl-4 mb-6;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-4 sm:px-6;
+  }
+
+  .nav-link {
+    @apply text-sm font-medium text-white/80 hover:text-gold transition-colors duration-200;
+  }
+
+  .nav-link-active {
+    @apply text-gold;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-gold to-gold-soft bg-clip-text text-transparent;
+  }
+
+  /* Marquee container — hides overflow for the pulse bar */
+  .marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .marquee-content {
+    display: inline-block;
+    animation: marquee 35s linear infinite;
+  }
+
+  .marquee-content:hover {
+    animation-play-state: paused;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

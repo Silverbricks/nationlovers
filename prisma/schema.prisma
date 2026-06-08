@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CITIZEN
+  VOLUNTEER
+  EXPERT
+  ADMIN
+}
+
+enum Category {
+  COST_OF_LIVING
+  HOUSING
+  HEALTHCARE
+  IMMIGRATION
+  TRANSPORT
+  EDUCATION
+  SAFETY
+  CLIMATE
+  GOVERNMENT
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IssueStatus {
+  REPORTED
+  VERIFIED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ProgressStage {
+  REPORTED
+  VERIFIED
+  SUGGESTIONS_ADDED
+  RANKED
+  SUMMARIZED
+  DRAFT
+  SHARED
+}
+
+enum AustralianState {
+  NSW
+  VIC
+  QLD
+  WA
+  SA
+  TAS
+  ACT
+  NT
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  role          Role            @default(CITIZEN)
+  state         AustralianState?
+  bio           String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  issues        Issue[]
+  suggestions   Suggestion[]
+  votes         Vote[]
+  comments      Comment[]
+}
+
+model Issue {
+  id          String          @id @default(cuid())
+  title       String
+  description String          @db.Text
+  category    Category
+  location    String
+  state       AustralianState
+  severity    Severity
+  status      IssueStatus     @default(REPORTED)
+  photoUrls   String[]
+  upvotes     Int             @default(0)
+  authorId    String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  author      User            @relation(fields: [authorId], references: [id])
+  suggestions Suggestion[]
+  votes       Vote[]
+  comments    Comment[]
+  progress    IssueProgress[]
+
+  @@index([category])
+  @@index([state])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+  @@index([upvotes])
+}
+
+model Suggestion {
+  id               String   @id @default(cuid())
+  issueId          String
+  title            String
+  description      String   @db.Text
+  solution         String   @db.Text
+  stepsToImplement String[]
+  costEstimate     String?
+  feasibilityRating Int     @default(5)
+  communityImpact  String?
+  votes            Int      @default(0)
+  authorId         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  issue            Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author           User     @relation(fields: [authorId], references: [id])
+  suggestionVotes  Vote[]
+}
+
+model Vote {
+  id           String      @id @default(cuid())
+  userId       String
+  issueId      String?
+  suggestionId String?
+  type         String
+  createdAt    DateTime    @default(now())
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue        Issue?      @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  suggestion   Suggestion? @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, issueId])
+  @@unique([userId, suggestionId])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  authorId  String
+  issueId   String
+  parentId  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    User      @relation(fields: [authorId], references: [id])
+  issue     Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+}
+
+model IssueProgress {
+  id        String        @id @default(cuid())
+  issueId   String
+  stage     ProgressStage
+  note      String?
+  updatedAt DateTime      @default(now())
+  issue     Issue         @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
